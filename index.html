@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حاسبة السعرات</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#1f7a5c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1d2330;
+    --muted: #6b7280;
+    --border: #e3e5e9;
+    --accent: #1f7a5c;
+    --accent-text: #ffffff;
+    --danger: #c0392b;
+    --soft: #eef6f2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --card: #1e2229;
+      --text: #e8eaed;
+      --muted: #9aa1ab;
+      --border: #2f343d;
+      --accent: #3fae86;
+      --accent-text: #0e1512;
+      --danger: #ef6b5b;
+      --soft: #1b2a24;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; margin: 8px 0 12px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .datebar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .datebar .date { flex: 1; text-align: center; font-weight: 600; min-width: 140px; }
+  button {
+    font: inherit;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.del {
+    color: var(--danger); background: transparent; border: none;
+    padding: 4px 10px; font-size: 1.1rem; line-height: 1;
+  }
+  label { display: block; font-size: .9rem; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    font: inherit; width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .row .grow { flex: 1; min-width: 120px; }
+  .preview { color: var(--muted); font-size: .95rem; min-height: 1.5em; }
+  .error { color: var(--danger); font-size: .9rem; min-height: 1.3em; margin-top: 6px; }
+  .total {
+    background: var(--soft);
+    border-color: var(--accent);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .total .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+  th { font-size: .85rem; color: var(--muted); font-weight: 600; }
+  td.n, th.n { text-align: left; white-space: nowrap; }
+  td.x { width: 1%; }
+  tr:last-child td { border-bottom: none; }
+  .empty { color: var(--muted); text-align: center; padding: 12px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 12px; }
+  .custom-list { list-style: none; padding: 0; margin: 12px 0 0; }
+  .custom-list li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid var(--border);
+  }
+  .custom-list li:last-child { border-bottom: none; }
+  .userbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .userbar strong { overflow-wrap: anywhere; }
+  .user-list { list-style: none; padding: 0; margin: 0 0 12px; }
+  .user-list li {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 6px 0; border-bottom: 1px solid var(--border);
+  }
+  .user-list li:last-child { border-bottom: none; }
+  .user-list .pick { flex: 1; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+  .user-list .confirm-text { flex: 1 1 100%; overflow-wrap: anywhere; }
+  button.danger { background: var(--danger); color: var(--bg); border-color: var(--danger); font-weight: 600; }
+  #newUserForm { margin-top: 12px; }
+  .search-wrap { position: relative; }
+  .suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+    list-style: none; margin: 4px 0 0; padding: 4px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    max-height: 240px; overflow-y: auto;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .15);
+  }
+  .suggestions button {
+    display: block; width: 100%; text-align: right;
+    border: none; background: transparent; border-radius: 6px; padding: 8px 10px;
+  }
+  .suggestions button:hover, .suggestions button:focus-visible { background: var(--soft); }
+  .suggestions .none { color: var(--muted); padding: 8px 10px; }
+  .warn { background: #fff4d6; color: #6b4e00; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: .9rem; }
+  .note { color: var(--muted); font-size: .8rem; text-align: center; margin-top: 8px; }
+  .disclaimer { margin: -6px 0 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>حاسبة السعرات اليومية</h1>
+
+  <div id="storageWarn" class="warn" hidden>تعذّر الحفظ في المتصفح، ستُفقد البيانات عند إغلاق الصفحة.</div>
+  <div id="dataWarn" class="warn" hidden></div>
+
+  <!-- شاشة نقل السجل السابق (تظهر عند الفتح إن وُجد سجل لم يُنقل بعد) -->
+  <section class="card" id="migrateView" hidden>
+    <h2>سجل سابق</h2>
+    <p id="migrateText"></p>
+    <label for="migrateName">اسم المستخدم الجديد</label>
+    <div class="row">
+      <div class="grow"><input id="migrateName" type="text" maxlength="30" autocomplete="off"></div>
+      <button id="migrateBtn" class="primary">نقل</button>
+      <button id="migrateLater">ليس الآن</button>
+    </div>
+    <div class="error" id="migrateError"></div>
+  </section>
+
+  <!-- شاشة اختيار المستخدم -->
+  <section class="card" id="userView" hidden>
+    <h2>اختر المستخدم</h2>
+    <ul class="user-list" id="userList"></ul>
+    <p class="empty" id="noUsers" hidden>لا يوجد مستخدمون بعد.</p>
+    <div class="error" id="userError"></div>
+    <button id="newUserBtn">+ مستخدم جديد</button>
+    <div id="newUserForm" hidden>
+      <label for="newUserName">الاسم</label>
+      <div class="row">
+        <div class="grow"><input id="newUserName" type="text" maxlength="30" autocomplete="off"></div>
+        <button id="newUserCreate" class="primary">إنشاء</button>
+        <button id="newUserCancel">إلغاء</button>
+      </div>
+      <div class="error" id="newUserError"></div>
+    </div>
+  </section>
+
+  <div id="appView" hidden>
+  <section class="card userbar">
+    <span>المستخدم: <strong id="userName"></strong></span>
+    <button id="switchUser">تبديل المستخدم</button>
+  </section>
+
+  <section class="card datebar">
+    <button id="prevDay" title="اليوم السابق">→ السابق</button>
+    <div class="date" id="dateLabel"></div>
+    <button id="nextDay" title="اليوم التالي">التالي ←</button>
+    <button id="todayBtn">اليوم</button>
+  </section>
+
+  <section class="card">
+    <h2>إضافة طعام</h2>
+    <div class="field">
+      <label for="search">بحث</label>
+      <div class="search-wrap" id="searchWrap">
+        <input id="search" type="search" placeholder="اكتب اسم الطعام…" autocomplete="off"
+               role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false">
+        <ul id="suggestions" class="suggestions" role="listbox" aria-label="اقتراحات" hidden></ul>
+      </div>
+    </div>
+    <div class="field">
+      <label for="foodSelect">الطعام</label>
+      <select id="foodSelect"></select>
+    </div>
+    <div class="row">
+      <div class="grow">
+        <label for="grams">الكمية (غرام)</label>
+        <input id="grams" lang="en" type="text" inputmode="decimal" autocomplete="off" placeholder="مثلاً 150">
+      </div>
+      <button id="addBtn" class="primary">إضافة</button>
+    </div>
+    <div class="preview" id="preview"></div>
+    <div class="error" id="addError"></div>
+  </section>
+
+  <section class="card total">
+    <span>مجموع اليوم</span>
+    <span><span class="num" id="totalNum">0</span> سعرة</span>
+  </section>
+  <p class="note disclaimer">القيم تقريبية وليست نصيحة طبية</p>
+
+  <section class="card">
+    <h2>سجل اليوم</h2>
+    <div id="logContainer"></div>
+  </section>
+
+  <section class="card">
+    <details id="customDetails">
+      <summary>إضافة طعام جديد إلى القائمة</summary>
+      <div class="row">
+        <div class="grow">
+          <label for="customName">اسم الطعام</label>
+          <input id="customName" type="text" maxlength="60">
+        </div>
+        <div class="grow">
+          <label for="customKcal">السعرات لكل 100 غ</label>
+          <input id="customKcal" lang="en" type="text" inputmode="decimal" autocomplete="off">
+        </div>
+        <button id="customAddBtn" class="primary">حفظ</button>
+      </div>
+      <div class="error" id="customError"></div>
+      <ul class="custom-list" id="customList"></ul>
+    </details>
+  </section>
+
+  <p class="note">القيم تقريبية وتختلف حسب طريقة التحضير.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- قائمة الأطعمة المدمجة (سعرات لكل 100 غ، قيم تقريبية) ----------
+  const CATEGORIES = [
+    'أطباق عربية', 'نشويات وحبوب', 'بروتين', 'بقوليات', 'ألبان وأجبان',
+    'خضار', 'فواكه', 'دهون ومكسرات', 'حلويات', 'مشروبات'
+  ];
+  const CUSTOM_CAT = 'أطعمتي';
+
+  const BUILTIN = [
+    ['أطباق عربية', 'حمص بالطحينة', 177],
+    ['أطباق عربية', 'فلافل', 333],
+    ['أطباق عربية', 'فول مدمس بالزيت', 130],
+    ['أطباق عربية', 'متبل / بابا غنوج', 130],
+    ['أطباق عربية', 'تبولة', 120],
+    ['أطباق عربية', 'فتوش', 90],
+    ['أطباق عربية', 'شاورما دجاج', 220],
+    ['أطباق عربية', 'شاورما لحم', 260],
+    ['أطباق عربية', 'كبسة دجاج', 165],
+    ['أطباق عربية', 'منسف', 200],
+    ['أطباق عربية', 'مجدرة', 150],
+    ['أطباق عربية', 'ورق عنب محشي', 150],
+    ['أطباق عربية', 'كبة مقلية', 280],
+    ['أطباق عربية', 'مناقيش زعتر', 320],
+    ['أطباق عربية', 'شوربة عدس', 60],
+
+    ['نشويات وحبوب', 'خبز عربي أبيض', 275],
+    ['نشويات وحبوب', 'خبز أسمر', 250],
+    ['نشويات وحبوب', 'خبز توست', 265],
+    ['نشويات وحبوب', 'أرز أبيض مطبوخ', 130],
+    ['نشويات وحبوب', 'أرز بني مطبوخ', 112],
+    ['نشويات وحبوب', 'برغل مطبوخ', 83],
+    ['نشويات وحبوب', 'معكرونة مطبوخة', 158],
+    ['نشويات وحبوب', 'بطاطا مسلوقة', 87],
+    ['نشويات وحبوب', 'بطاطا مقلية', 312],
+    ['نشويات وحبوب', 'بطاطا حلوة مسلوقة', 76],
+    ['نشويات وحبوب', 'شوفان', 389],
+    ['نشويات وحبوب', 'كورن فليكس', 357],
+
+    ['بروتين', 'صدر دجاج مشوي', 165],
+    ['بروتين', 'فخذ دجاج مشوي', 209],
+    ['بروتين', 'لحم بقر مفروم مطبوخ', 250],
+    ['بروتين', 'لحم غنم مطبوخ', 294],
+    ['بروتين', 'سمك أبيض مشوي', 120],
+    ['بروتين', 'سلمون مطبوخ', 206],
+    ['بروتين', 'تونة معلبة بالماء', 116],
+    ['بروتين', 'روبيان مطبوخ', 99],
+    ['بروتين', 'بيض مسلوق', 155],
+    ['بروتين', 'بيض مقلي', 196],
+
+    ['بقوليات', 'حمص مسلوق', 164],
+    ['بقوليات', 'فول مسلوق', 110],
+    ['بقوليات', 'عدس مطبوخ', 116],
+    ['بقوليات', 'فاصوليا حمراء مطبوخة', 127],
+
+    ['ألبان وأجبان', 'حليب كامل الدسم', 61],
+    ['ألبان وأجبان', 'حليب قليل الدسم', 42],
+    ['ألبان وأجبان', 'لبن زبادي', 61],
+    ['ألبان وأجبان', 'لبنة', 160],
+    ['ألبان وأجبان', 'لبن عيران', 37],
+    ['ألبان وأجبان', 'جبنة بيضاء (فيتا/عكاوي)', 264],
+    ['ألبان وأجبان', 'جبنة حلوم', 321],
+    ['ألبان وأجبان', 'جبنة شيدر', 403],
+
+    ['خضار', 'خيار', 15],
+    ['خضار', 'طماطم', 18],
+    ['خضار', 'خس', 15],
+    ['خضار', 'جزر', 41],
+    ['خضار', 'بصل', 40],
+    ['خضار', 'فلفل حلو', 31],
+    ['خضار', 'باذنجان مشوي', 35],
+    ['خضار', 'كوسا', 17],
+    ['خضار', 'بروكلي', 34],
+    ['خضار', 'سبانخ', 23],
+
+    ['فواكه', 'تفاح', 52],
+    ['فواكه', 'موز', 89],
+    ['فواكه', 'برتقال', 47],
+    ['فواكه', 'عنب', 69],
+    ['فواكه', 'فراولة', 32],
+    ['فواكه', 'بطيخ', 30],
+    ['فواكه', 'مانجو', 60],
+    ['فواكه', 'تمر', 282],
+    ['فواكه', 'تين', 74],
+    ['فواكه', 'رمان', 83],
+
+    ['دهون ومكسرات', 'زيت زيتون', 884],
+    ['دهون ومكسرات', 'زبدة', 717],
+    ['دهون ومكسرات', 'طحينة', 595],
+    ['دهون ومكسرات', 'لوز', 579],
+    ['دهون ومكسرات', 'جوز', 654],
+    ['دهون ومكسرات', 'فول سوداني', 567],
+    ['دهون ومكسرات', 'فستق حلبي', 560],
+
+    ['حلويات', 'كنافة', 380],
+    ['حلويات', 'بقلاوة', 430],
+    ['حلويات', 'معمول بالتمر', 450],
+    ['حلويات', 'شوكولاتة بالحليب', 535],
+    ['حلويات', 'بسكويت', 480],
+    ['حلويات', 'كيك', 370],
+    ['حلويات', 'آيس كريم', 207],
+    ['حلويات', 'عسل', 304],
+    ['حلويات', 'سكر', 387],
+
+    ['مشروبات', 'عصير برتقال طبيعي', 45],
+    ['مشروبات', 'مشروب غازي', 42],
+    ['مشروبات', 'شاي بدون سكر', 1],
+    ['مشروبات', 'قهوة بدون سكر', 2]
+  ].map(([cat, name, kcal], i) => ({ id: 'b' + i, cat, name, kcal }));
+
+  // ---------- التخزين ----------
+  const KEY_LOG = 'calorie.log';          // السجل القديم (قبل المستخدمين): للقراءة فقط، لا يُكتب ولا يُحذف
+  const KEY_CUSTOM = 'calorie.customFoods'; // مشتركة بين كل المستخدمين
+  const KEY_USERS = 'calorie.users';        // [{id, name}]
+  const KEY_LEGACY_COPIED = 'calorie.legacyCopiedTo'; // معرّف المستخدم الذي نُسخ إليه السجل القديم
+  // حروف لا تظهر: الواصلة اللينة، والمسافات والعلامات الصفرية، وعلامات الاتجاه، وBOM
+  const INVISIBLE = /[­​-‏‪-‮⁠-⁩﻿]/g;
+  const MAX_GRAMS = 10000; // حد تقني للكمية في الإدخال الواحد
+  const MAX_KCAL = 900;    // حد تقني لسعرات 100 غ (الدهون الصافية ≈ 900)
+  let storageOk = true;
+
+  const unreadKeys = new Set(); // مفاتيح فشلت قراءتها من التخزين
+  const unsavedKeys = new Set(); // مفاتيح في الذاكرة تغييرات لم يُكتب آخرها (فشل setItem)
+  // سجلات مستخدمين غير مفتوحين لم تُكتب في التخزين (مفتاح السجل ← السجل)، حتى لا تضيع عند التبديل.
+  // تبقى حتى أول حفظ ناجح للمفتاح، أو حتى إغلاق الصفحة
+  const memoryLogs = new Map();
+  const badKeys = [];       // المفاتيح التي نصها المحفوظ ليس JSON صالحاً
+  let backupFailed = false; // تعذّر حفظ نسخته الاحتياطية
+
+  function load(key, fallback) {
+    let raw;
+    try {
+      raw = localStorage.getItem(key);
+    } catch (e) {
+      storageOk = false;
+      unreadKeys.add(key);
+      return fallback;
+    }
+    if (!raw) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      // التخزين يعمل لكن البيانات تالفة: نحفظ نسخة منها قبل أن يُكتب فوقها
+      badKeys.push(key);
+      try { localStorage.setItem(key + '.backup', raw); } catch (e2) { backupFailed = true; }
+      return fallback;
+    }
+  }
+  // ترجع true إذا حُفظت القيمة فعلاً
+  function save(key, value) {
+    // مفتاح لم نستطع قراءته: لا نكتب فوقه، فقد يحتوي بيانات قديمة لم نرها
+    if (unreadKeys.has(key)) return false;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      // صار المحفوظ JSON صالحاً: لا داعي لتحذير «تعذّرت القراءة» عند الفتح التالي
+      for (let i = badKeys.indexOf(key); i !== -1; i = badKeys.indexOf(key)) badKeys.splice(i, 1);
+      unsavedKeys.delete(key);
+      memoryLogs.delete(key);
+      return true;
+    } catch (e) {
+      storageOk = false;
+      unsavedKeys.add(key);
+      showStorageWarn();
+      return false;
+    }
+  }
+  // قراءة لمعالج حدث storage: لا تمس unreadKeys ولا badKeys ولا تكتب نسخة احتياطية.
+  // ترجع undefined إذا تعذّرت القراءة أو كان النص تالفاً، فيبقى ما في الذاكرة كما هو
+  function peek(key, fallback) {
+    let raw;
+    try {
+      raw = localStorage.getItem(key);
+    } catch (e) {
+      storageOk = false;
+      showStorageWarn();
+      return undefined;
+    }
+    if (!raw) return fallback;
+    try { return JSON.parse(raw); } catch (e) { return undefined; }
+  }
+  function showStorageWarn() {
+    document.getElementById('storageWarn').hidden = storageOk;
+  }
+  function showDataWarn() {
+    const el = document.getElementById('dataWarn');
+    // نذكر فقط ما يخص الشاشة الحالية: سجل المستخدم الحالي، وقائمة المستخدمين، وأطعمتي
+    const parts = [];
+    if (currentUser && badKeys.includes(logKey())) parts.push('السجل');
+    if (badKeys.includes(KEY_USERS)) parts.push('قائمة المستخدمين');
+    if (badKeys.includes(KEY_CUSTOM)) parts.push('قائمة أطعمتي');
+    el.textContent = 'تعذّرت قراءة بعض البيانات المحفوظة (' + parts.join('، ') + ')، فبدأت فارغة.'
+      + (backupFailed ? '' : ' حُفظت نسخة من البيانات القديمة.');
+    el.hidden = !parts.length;
+  }
+
+  // رقم صحيح غير سالب (يقبل النص الرقمي مثل "100") وإلا null
+  function toNum(v) {
+    // رقم حقيقي، أو نص بصيغة رقم عادية فقط (يرفض "  " و"0x1F" و"1e3")
+    const n = typeof v === 'number' ? v : typeof v === 'string' ? toNumber(v) : NaN;
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+  // يحذف الأيام والعناصر التالفة من السجل المقروء من التخزين
+  function cleanLog(raw) {
+    const out = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(raw)) {
+      if (!Array.isArray(raw[k])) continue;
+      const items = [];
+      for (const it of raw[k]) {
+        if (!it || typeof it !== 'object' || typeof it.name !== 'string') continue;
+        const grams = toNum(it.grams), kcal = toNum(it.kcal);
+        if (grams === null || grams === 0 || kcal === null) continue;
+        items.push({ ...it, grams, kcal });
+      }
+      if (items.length) out[k] = items;
+    }
+    return out;
+  }
+  // يحذف الأطعمة المخصصة التالفة
+  function cleanCustom(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const f of raw) {
+      if (!f || typeof f !== 'object' || typeof f.id !== 'string') continue;
+      if (typeof f.name !== 'string' || !normalize(f.name)) continue;
+      const kcal = toNum(f.kcal);
+      if (kcal === null) continue;
+      out.push({ ...f, kcal });
+    }
+    return out;
+  }
+
+  // يحذف المستخدمين التالفين والمكررين
+  function cleanUsers(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const u of raw) {
+      if (!u || typeof u !== 'object' || typeof u.id !== 'string' || !u.id) continue;
+      if (typeof u.name !== 'string' || !normalize(u.name)) continue;
+      if (out.some(x => x.id === u.id)) continue;
+      out.push({ id: u.id, name: u.name });
+    }
+    return out;
+  }
+
+  let customFoods = cleanCustom(load(KEY_CUSTOM, []));
+  let users = cleanUsers(load(KEY_USERS, []));
+  const legacyLog = cleanLog(load(KEY_LOG, {})); // السجل القديم، للنسخ فقط
+  const legacyCopiedTo = load(KEY_LEGACY_COPIED, null);
+  let currentUser = null;
+  let log = {}; // سجل المستخدم الحالي
+  function logKey() { return KEY_LOG + '.' + currentUser.id; }
+
+  // ---------- التاريخ (بالتوقيت المحلي) ----------
+  function dateKey(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  function keyToDate(k) {
+    const [y, m, d] = k.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  let currentKey = dateKey(new Date());
+  // هل المستخدم يتابع «اليوم»؟ إن كان كذلك ننتقل معه تلقائياً إلى اليوم الجديد بعد منتصف الليل
+  let followToday = true;
+  function syncToday() {
+    if (!currentUser) return;
+    const today = dateKey(new Date());
+    if (followToday && currentKey !== today) {
+      currentKey = today;
+      renderLog();
+    }
+  }
+
+  const dateFmt = new Intl.DateTimeFormat('ar-u-nu-latn', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  const fmt = n => Number(n).toLocaleString('en-US');
+
+  // ---------- عناصر الصفحة ----------
+  const $ = id => document.getElementById(id);
+  const els = {
+    search: $('search'), select: $('foodSelect'), grams: $('grams'),
+    sugg: $('suggestions'), searchWrap: $('searchWrap'),
+    userName: $('userName'), switchUser: $('switchUser'),
+    userList: $('userList'), noUsers: $('noUsers'), userError: $('userError'),
+    newUserBtn: $('newUserBtn'), newUserForm: $('newUserForm'), newUserName: $('newUserName'),
+    newUserCreate: $('newUserCreate'), newUserCancel: $('newUserCancel'), newUserError: $('newUserError'),
+    migrateText: $('migrateText'), migrateName: $('migrateName'), migrateBtn: $('migrateBtn'),
+    migrateLater: $('migrateLater'), migrateError: $('migrateError'),
+    addBtn: $('addBtn'), preview: $('preview'), addError: $('addError'),
+    total: $('totalNum'), logContainer: $('logContainer'),
+    dateLabel: $('dateLabel'), prev: $('prevDay'), next: $('nextDay'), today: $('todayBtn'),
+    cName: $('customName'), cKcal: $('customKcal'), cAdd: $('customAddBtn'),
+    cError: $('customError'), cList: $('customList')
+  };
+
+  function allFoods() {
+    return customFoods.map(f => ({ ...f, cat: CUSTOM_CAT })).concat(BUILTIN);
+  }
+  function findFood(id) {
+    return allFoods().find(f => f.id === id) || null;
+  }
+
+  // ---------- قائمة الاختيار ----------
+  function normalize(s) {
+    // NFC يدمج الحرف مع همزة/مدّة مكتوبة كعلامة منفصلة (ا + ٔ → أ) قبل التوحيد
+    return String(s).normalize('NFC').toLowerCase()
+      .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
+      .replace(/[ً-ٕ]/g, '') // التشكيل، وعلامات الهمزة والمدّة المنفصلة المتبقية
+      .replace(INVISIBLE, '')       // حذف الحروف غير المرئية
+      .replace(/ٱ/g, 'ا')          // ألف الوصل → ا
+      .replace(/[ـٰ]/g, '')         // حذف التطويل والألف الخنجرية
+      .replace(/\s+/g, ' ')         // دمج المسافات المتكررة
+      .trim();
+  }
+
+  function renderSelect() {
+    const q = normalize(els.search.value);
+    const prev = els.select.value;
+    els.select.textContent = '';
+    const foods = allFoods().filter(f => !q || normalize(f.name).includes(q));
+    const cats = [CUSTOM_CAT].concat(CATEGORIES);
+    let count = 0;
+    const ordered = []; // نفس النتائج وبنفس ترتيب القائمة، للاقتراحات
+    for (const cat of cats) {
+      const items = foods.filter(f => f.cat === cat);
+      if (!items.length) continue;
+      ordered.push(...items);
+      const group = document.createElement('optgroup');
+      group.label = cat;
+      for (const f of items) {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.textContent = f.name;
+        group.appendChild(opt);
+        count++;
+      }
+      els.select.appendChild(group);
+    }
+    if (!count) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'لا توجد نتائج';
+      opt.disabled = true;
+      els.select.appendChild(opt);
+      els.select.value = '';
+    } else if (prev && foods.some(f => f.id === prev)) {
+      els.select.value = prev;
+    }
+    updatePreview();
+    return ordered;
+  }
+
+  // ---------- اقتراحات البحث ----------
+  function hideSuggestions() {
+    els.sugg.hidden = true;
+    els.search.setAttribute('aria-expanded', 'false');
+  }
+  function renderSuggestions(q, foods) {
+    els.sugg.textContent = '';
+    if (!q) { hideSuggestions(); return; }
+    if (!foods.length) {
+      const li = document.createElement('li');
+      li.className = 'none';
+      li.textContent = 'لا توجد نتائج';
+      els.sugg.appendChild(li);
+    }
+    for (const f of foods) {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'presentation');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('role', 'option');
+      btn.textContent = f.name;
+      btn.addEventListener('click', () => chooseFood(f.id));
+      li.appendChild(btn);
+      els.sugg.appendChild(li);
+    }
+    els.sugg.hidden = false;
+    els.search.setAttribute('aria-expanded', 'true');
+  }
+  function chooseFood(id) {
+    els.search.value = '';
+    hideSuggestions();
+    renderSelect();          // تعيد القائمة كاملة
+    els.select.value = id;
+    updatePreview();
+    els.grams.focus();
+  }
+
+  // يحوّل الأرقام العربية والفارسية والفاصلة العشرية ٫ إلى أرقام غربية ونقطة
+  function westernDigits(s) {
+    return String(s)
+      .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x0660)
+      .replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x06F0)
+      .replace(/٫/g, '.');
+  }
+  // يحوّل ما يكتبه المستخدم إلى أرقام غربية أثناء الكتابة، مع الحفاظ على موضع المؤشر
+  function westernizeInput(el) {
+    const v = westernDigits(el.value);
+    if (v === el.value) return;
+    const pos = el.selectionStart;
+    el.value = v;
+    if (pos !== null) el.setSelectionRange(pos, pos);
+  }
+  // رقم صارم: أرقام مع نقطة عشرية واحدة اختيارية، وإلا NaN
+  function toNumber(s) {
+    const v = westernDigits(s).trim();
+    return /^(\d+\.?\d*|\.\d+)$/.test(v) ? Number(v) : NaN;
+  }
+
+  function parseGrams() {
+    // التقريب قبل الفحص، لتستخدم المعاينة والإضافة القيمة نفسها
+    const v = Math.round(toNumber(els.grams.value) * 10) / 10;
+    return Number.isFinite(v) && v > 0 && v <= MAX_GRAMS ? v : null;
+  }
+
+  function updatePreview() {
+    const food = findFood(els.select.value);
+    const g = parseGrams();
+    els.preview.textContent = food && g ? '≈ ' + fmt(Math.round(food.kcal * g / 100)) + ' سعرة' : '';
+  }
+
+  // ---------- السجل ----------
+  function dayItems() {
+    return log[currentKey] || [];
+  }
+
+  function renderLog() {
+    const items = dayItems();
+    const isToday = currentKey === dateKey(new Date());
+    els.dateLabel.textContent = (isToday ? 'اليوم — ' : '') + dateFmt.format(keyToDate(currentKey));
+    els.next.disabled = isToday;
+    els.today.disabled = isToday;
+
+    const total = items.reduce((s, it) => s + it.kcal, 0);
+    els.total.textContent = fmt(total);
+
+    els.logContainer.textContent = '';
+    if (!items.length) {
+      const p = document.createElement('p');
+      p.className = 'empty';
+      p.textContent = 'لا يوجد طعام مسجّل لهذا اليوم.';
+      els.logContainer.appendChild(p);
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>الطعام</th><th class="n">الكمية</th><th class="n">السعرات</th><th></th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    items.forEach((it, idx) => {
+      const tr = document.createElement('tr');
+      const tdName = document.createElement('td');
+      tdName.textContent = it.name;
+      const tdG = document.createElement('td');
+      tdG.className = 'n';
+      tdG.textContent = fmt(it.grams) + ' غ';
+      const tdK = document.createElement('td');
+      tdK.className = 'n';
+      tdK.textContent = fmt(it.kcal);
+      const tdX = document.createElement('td');
+      tdX.className = 'x';
+      const btn = document.createElement('button');
+      btn.className = 'del';
+      btn.textContent = '✕';
+      btn.title = 'حذف';
+      btn.setAttribute('aria-label', 'حذف ' + it.name);
+      btn.addEventListener('click', () => removeItem(idx));
+      tdX.appendChild(btn);
+      tr.append(tdName, tdG, tdK, tdX);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    els.logContainer.appendChild(table);
+  }
+
+  function addItem() {
+    syncToday();
+    els.addError.textContent = '';
+    const food = findFood(els.select.value);
+    const g = parseGrams();
+    if (!food) { els.addError.textContent = 'اختر طعاماً من القائمة.'; return; }
+    if (!g) {
+      const raw = toNumber(els.grams.value);
+      els.addError.textContent = Math.round(raw * 10) / 10 > MAX_GRAMS
+        ? 'الكمية كبيرة جداً، الحد ' + fmt(MAX_GRAMS) + ' غ.'
+        : raw > 0
+          ? 'الكمية صغيرة جداً، أقل كمية 0.1 غ.'
+          : 'أدخل كمية صحيحة أكبر من صفر.';
+      els.grams.focus(); return;
+    }
+    const item = { name: food.name, grams: g, kcal: Math.round(food.kcal * g / 100), ts: Date.now() };
+    (log[currentKey] = log[currentKey] || []).push(item);
+    save(logKey(), log);
+    els.grams.value = '';
+    updatePreview();
+    renderLog();
+    els.grams.focus();
+  }
+
+  function removeItem(idx) {
+    const items = dayItems();
+    items.splice(idx, 1);
+    if (!items.length) delete log[currentKey];
+    save(logKey(), log);
+    renderLog();
+  }
+
+  function shiftDay(delta) {
+    const d = keyToDate(currentKey);
+    d.setDate(d.getDate() + delta);
+    const k = dateKey(d);
+    if (k > dateKey(new Date())) return;
+    currentKey = k;
+    followToday = k === dateKey(new Date());
+    renderLog();
+  }
+
+  // ---------- الأطعمة المخصصة ----------
+  function renderCustomList() {
+    els.cList.textContent = '';
+    customFoods.forEach(f => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = f.name + ' — ' + fmt(f.kcal) + ' سعرة/100غ';
+      const btn = document.createElement('button');
+      btn.className = 'del';
+      btn.textContent = '✕';
+      btn.title = 'حذف من القائمة';
+      btn.setAttribute('aria-label', 'حذف ' + f.name + ' من القائمة');
+      btn.addEventListener('click', () => {
+        customFoods = customFoods.filter(x => x.id !== f.id);
+        save(KEY_CUSTOM, customFoods);
+        renderCustomList();
+        renderSelect();
+      });
+      li.append(span, btn);
+      els.cList.appendChild(li);
+    });
+  }
+
+  function addCustom() {
+    els.cError.textContent = '';
+    const name = els.cName.value.replace(INVISIBLE, '').trim();
+    // منزلة عشرية واحدة (لا عدد صحيح) حتى لا تُقرَّب السعرات مرتين؛ والفحص بعد التقريب
+    const kcal = Math.round(toNumber(els.cKcal.value) * 10) / 10;
+    // الاسم يجب أن يحتوي حرفاً ظاهراً، لا تطويلاً أو تشكيلاً فقط
+    if (!normalize(name)) { els.cError.textContent = 'أدخل اسم الطعام.'; els.cName.focus(); return; }
+    if (!Number.isFinite(kcal) || kcal < 0) { els.cError.textContent = 'أدخل عدد سعرات صحيحاً.'; els.cKcal.focus(); return; }
+    if (kcal > MAX_KCAL) { els.cError.textContent = 'الحد الأقصى ' + fmt(MAX_KCAL) + ' سعرة لكل 100 غ.'; els.cKcal.focus(); return; }
+    if (allFoods().some(f => normalize(f.name) === normalize(name))) {
+      els.cError.textContent = 'هذا الطعام موجود في القائمة.'; return;
+    }
+    const food = { id: 'c' + Date.now(), name, kcal };
+    customFoods.push(food);
+    save(KEY_CUSTOM, customFoods);
+    els.cName.value = '';
+    els.cKcal.value = '';
+    renderCustomList();
+    els.search.value = '';
+    renderSelect();
+    els.select.value = food.id;
+    updatePreview();
+  }
+
+  // ---------- المستخدمون ----------
+  const views = { migrate: $('migrateView'), users: $('userView'), app: $('appView') };
+  function showView(name) {
+    for (const k in views) views[k].hidden = k !== name;
+  }
+  function makeBtn(text, cls, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (cls) b.className = cls;
+    b.textContent = text;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function cleanName(s) { return String(s).replace(INVISIBLE, '').trim(); }
+  // نفس قواعد اسم الطعام: حرف ظاهر واحد على الأقل، ولا تكرار (بعد التوحيد)
+  function nameError(name) {
+    if (!normalize(name)) return 'أدخل الاسم.';
+    if (users.some(u => normalize(u.name) === normalize(name))) return 'هذا الاسم موجود.';
+    return '';
+  }
+
+  let confirmingId = null; // المستخدم الذي يُعرض تأكيد حذفه
+  const memoryOnlyUsers = new Set(); // مستخدمون تعذّر حفظهم: يعيشون في الذاكرة فقط
+  // حفظ قائمة المستخدمين؛ عند النجاح يصبح كل مستخدم ذاكرة فيها محفوظاً، فيُعامل كمستخدم عادي
+  function saveUsers(list) {
+    if (!save(KEY_USERS, list)) return false;
+    for (const u of list) {
+      if (memoryOnlyUsers.has(u.id)) {
+        memoryOnlyUsers.delete(u.id);
+        const k = KEY_LOG + '.' + u.id;
+        unreadKeys.delete(k); // مفتاح لم يُكتب قط، فلا شيء نخشى الكتابة فوقه
+        // نكتب ما سجّله في الذاكرة الآن؛ إن فشل يبقى في الذاكرة (unsavedKeys)
+        const data = currentUser && currentUser.id === u.id ? log : memoryLogs.get(k);
+        if (data) save(k, data);
+      }
+    }
+    return true;
+  }
+  function renderUsers() {
+    els.userError.textContent = ''; // أي تغيير في القائمة يجعل رسالة الخطأ السابقة قديمة
+    els.userList.textContent = '';
+    els.noUsers.hidden = users.length > 0;
+    for (const u of users) {
+      const li = document.createElement('li');
+      if (confirmingId === u.id) {
+        const span = document.createElement('span');
+        span.className = 'confirm-text';
+        span.textContent = 'حذف «' + u.name + '» وكل سجله نهائياً؟';
+        li.append(span,
+          makeBtn('حذف', 'danger', () => deleteUser(u)),
+          makeBtn('إلغاء', '', () => { confirmingId = null; renderUsers(); }));
+      } else {
+        const del = makeBtn('حذف', 'del', () => { confirmingId = u.id; renderUsers(); });
+        del.setAttribute('aria-label', 'حذف ' + u.name);
+        li.append(makeBtn(u.name, 'pick', () => openUser(u)), del);
+      }
+      els.userList.appendChild(li);
+    }
+  }
+  function deleteUser(u) {
+    let err = '';
+    const remaining = users.filter(x => x.id !== u.id);
+    if (memoryOnlyUsers.has(u.id)) {
+      // لا شيء له في التخزين: يكفي حذفه من الذاكرة
+      memoryOnlyUsers.delete(u.id);
+      memoryLogs.delete(KEY_LOG + '.' + u.id);
+      users = remaining;
+      saveUsers(users);
+    } else if (saveUsers(remaining)) {
+      users = remaining;
+      memoryLogs.delete(KEY_LOG + '.' + u.id);
+      try {
+        localStorage.removeItem(KEY_LOG + '.' + u.id);
+        localStorage.removeItem(KEY_LOG + '.' + u.id + '.backup');
+      } catch (e) { /* التخزين غير متاح */ }
+    } else {
+      // لم تُحفظ القائمة الجديدة: لا نحذف السجل، وإلا عاد المستخدم بسجل فارغ
+      err = 'تعذّر حذف المستخدم، لم يتغير شيء.';
+    }
+    confirmingId = null;
+    renderUsers();
+    els.userError.textContent = err; // بعد renderUsers لأنها تمسح الرسالة
+  }
+  function showUsers() {
+    if (currentUser) {
+      // سجل لم يُكتب في التخزين: نحتفظ به في الذاكرة، وإلا ضاع عند فتح المستخدم من جديد
+      const k = logKey();
+      if (unreadKeys.has(k) || unsavedKeys.has(k)) memoryLogs.set(k, log);
+    }
+    currentUser = null;
+    log = {};
+    confirmingId = null;
+    els.userError.textContent = '';
+    els.search.value = '';
+    hideSuggestions();
+    els.grams.value = '';
+    els.addError.textContent = '';
+    // لا يرى المستخدم التالي ما كتبه أو اختاره السابق
+    els.cName.value = '';
+    els.cKcal.value = '';
+    els.cError.textContent = '';
+    renderSelect();
+    els.select.selectedIndex = 0;
+    updatePreview();
+    closeNewUserForm();
+    renderUsers();
+    showDataWarn();
+    showView('users');
+  }
+  function openUser(u) {
+    currentUser = u;
+    const k = logKey();
+    if (memoryLogs.has(k)) {
+      log = memoryLogs.get(k); // أحدث مما في التخزين (أو ليس له شيء فيه)
+    } else {
+      log = cleanLog(load(k, {}));
+      unsavedKeys.delete(k); // ما في الذاكرة الآن هو ما في التخزين
+    }
+    currentKey = dateKey(new Date());
+    followToday = true;
+    els.userName.textContent = u.name;
+    renderSelect();
+    renderLog();
+    showStorageWarn();
+    showDataWarn();
+    showView('app');
+  }
+  function closeNewUserForm() {
+    els.newUserForm.hidden = true;
+    els.newUserBtn.hidden = false;
+    els.newUserName.value = '';
+    els.newUserError.textContent = '';
+  }
+  function createUser() {
+    const name = cleanName(els.newUserName.value);
+    const err = nameError(name);
+    if (err) { els.newUserError.textContent = err; els.newUserName.focus(); return; }
+    const u = { id: 'u' + Date.now(), name };
+    users.push(u);
+    if (!saveUsers(users)) {
+      // المستخدم غير محفوظ: لا نكتب سجله أيضاً حتى لا يبقى سجل بلا صاحب في التخزين.
+      // يعمل في الذاكرة فقط، وتحذير #storageWarn ظاهر (storageOk = false في كل حالات الفشل)
+      memoryOnlyUsers.add(u.id);
+      unreadKeys.add(KEY_LOG + '.' + u.id);
+    }
+    openUser(u);
+  }
+
+  // نسخ السجل القديم إلى مستخدم جديد؛ calorie.log نفسه لا يُمس
+  function migrateLegacy() {
+    els.migrateError.textContent = '';
+    const name = cleanName(els.migrateName.value);
+    const err = nameError(name);
+    if (err) { els.migrateError.textContent = err; els.migrateName.focus(); return; }
+    const u = { id: 'u' + Date.now(), name };
+    const key = KEY_LOG + '.' + u.id;
+    const json = JSON.stringify(legacyLog);
+    let copied = false;
+    try {
+      localStorage.setItem(key, json);
+      copied = localStorage.getItem(key) === json; // نتحقق بالقراءة قبل اعتبار النسخ ناجحاً
+    } catch (e) {
+      copied = false;
+      storageOk = false; // مثل بقية مسارات فشل الكتابة
+      showStorageWarn();
+    }
+    // العلامة تُحفظ قبل قائمة المستخدمين: لا يوجد أبداً مستخدم منسوخ إليه بلا علامة، فلا يتكرر النسخ
+    const marked = copied && save(KEY_LEGACY_COPIED, u.id);
+    users.push(u);
+    if (!marked || !saveUsers(users)) {
+      users.pop();
+      try { localStorage.removeItem(key); } catch (e) { /* لا شيء */ }
+      if (marked) {
+        // إن فشل هذا الحذف تبقى علامة لمستخدم غير موجود: لا يعود السؤال، و calorie.log يبقى سليماً
+        try { localStorage.removeItem(KEY_LEGACY_COPIED); } catch (e) { /* لا شيء */ }
+      }
+      els.migrateError.textContent = 'تعذّر حفظ السجل، لم يتغير شيء.';
+      return;
+    }
+    openUser(u);
+  }
+  function shouldAskMigrate() {
+    return Object.keys(legacyLog).length > 0 && !legacyCopiedTo
+      && !unreadKeys.has(KEY_LOG) && !unreadKeys.has(KEY_LEGACY_COPIED);
+  }
+
+  // ---------- الأحداث ----------
+  // الاقتراحات تُفتح وتتحدث من الكتابة في البحث فقط
+  els.search.addEventListener('input', () => renderSuggestions(normalize(els.search.value), renderSelect()));
+  // إخفاء الاقتراحات عند الضغط خارج البحث
+  document.addEventListener('pointerdown', e => {
+    if (!els.searchWrap.contains(e.target)) hideSuggestions();
+  });
+  els.select.addEventListener('change', updatePreview);
+  els.grams.addEventListener('input', () => { westernizeInput(els.grams); updatePreview(); });
+  els.cKcal.addEventListener('input', () => westernizeInput(els.cKcal));
+  els.grams.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+  els.addBtn.addEventListener('click', addItem);
+  els.prev.addEventListener('click', () => shiftDay(-1));
+  els.next.addEventListener('click', () => shiftDay(1));
+  els.today.addEventListener('click', () => { currentKey = dateKey(new Date()); followToday = true; renderLog(); });
+  // فحص تغيّر اليوم: عند العودة إلى الصفحة، وكل دقيقة
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncToday(); });
+  window.addEventListener('focus', syncToday);
+  setInterval(syncToday, 60000);
+  els.cAdd.addEventListener('click', addCustom);
+  els.cKcal.addEventListener('keydown', e => { if (e.key === 'Enter') addCustom(); });
+
+  els.switchUser.addEventListener('click', showUsers);
+  els.newUserBtn.addEventListener('click', () => {
+    els.newUserForm.hidden = false;
+    els.newUserBtn.hidden = true;
+    els.newUserName.focus();
+  });
+  els.newUserCancel.addEventListener('click', closeNewUserForm);
+  els.newUserCreate.addEventListener('click', createUser);
+  els.newUserName.addEventListener('keydown', e => { if (e.key === 'Enter') createUser(); });
+  els.migrateBtn.addEventListener('click', migrateLegacy);
+  els.migrateName.addEventListener('keydown', e => { if (e.key === 'Enter') migrateLegacy(); });
+  els.migrateLater.addEventListener('click', showUsers);
+
+  // تبويب آخر غيّر التخزين: نحدّث ما في الذاكرة حتى لا نكتب فوق تغييراته عند الحفظ التالي
+  window.addEventListener('storage', e => {
+    if (e.storageArea !== localStorage) return;
+    const all = e.key === null; // localStorage.clear()
+    const changed = k => (all || e.key === k) && !unreadKeys.has(k);
+    // في الذاكرة تغييرات لم تُحفظ لهذا المفتاح: لا نستبدلها. (قائمة المستخدمين لا تحتاج هذا:
+    // المستخدم غير المحفوظ محمي بـ memoryOnlyUsers، والحذف الفاشل لا يغيّر الذاكرة)
+    const replaceable = k => changed(k) && !unsavedKeys.has(k);
+
+    const customRaw = replaceable(KEY_CUSTOM) ? peek(KEY_CUSTOM, []) : undefined;
+    if (customRaw !== undefined) {
+      customFoods = cleanCustom(customRaw);
+      renderCustomList();
+      const ordered = renderSelect();
+      // الاقتراحات المفتوحة قد تعرض طعاماً حُذف للتو
+      if (!els.sugg.hidden) renderSuggestions(normalize(els.search.value), ordered);
+    }
+    const usersRaw = changed(KEY_USERS) ? peek(KEY_USERS, []) : undefined;
+    if (usersRaw !== undefined) {
+      const stored = cleanUsers(usersRaw);
+      // مستخدمو الذاكرة فقط (تعذّر حفظهم) يبقون في هذا التبويب
+      users = stored.concat(users.filter(u => memoryOnlyUsers.has(u.id) && !stored.some(x => x.id === u.id)));
+      if (confirmingId && !users.some(u => u.id === confirmingId)) confirmingId = null;
+      if (currentUser && !users.some(u => u.id === currentUser.id)) {
+        const k = logKey();
+        showUsers(); // حُذف المستخدم الحالي في تبويب آخر
+        // showUsers قد يضع سجله في memoryLogs؛ المستخدم لم يعد موجوداً فلا داعي لإبقائه
+        memoryLogs.delete(k);
+        unsavedKeys.delete(k);
+        return;
+      }
+      if (!views.users.hidden) renderUsers();
+    }
+    const logRaw = currentUser && replaceable(logKey()) ? peek(logKey(), {}) : undefined;
+    if (logRaw !== undefined) {
+      log = cleanLog(logRaw);
+      renderLog();
+    }
+    // نُسخ السجل القديم في تبويب آخر: سؤال النسخ هنا لم يعد صالحاً
+    if (!views.migrate.hidden && changed(KEY_LEGACY_COPIED) && peek(KEY_LEGACY_COPIED, null)) {
+      showUsers();
+      return;
+    }
+    showDataWarn();
+  });
+
+  renderSelect();
+  renderCustomList();
+  showStorageWarn();
+  if (shouldAskMigrate()) {
+    els.migrateText.textContent = 'وُجد سجل سابق محفوظ في هذا المتصفح (عدد الأيام المسجّلة: '
+      + fmt(Object.keys(legacyLog).length) + '). هل تريد نقله إلى مستخدم جديد؟';
+    showDataWarn();
+    showView('migrate');
+  } else {
+    showUsers();
+  }
+})();
+</script>
+<script>
+  // يعمل دون إنترنت بعد أول فتح. لا يعمل من file:// (فتح الملف مباشرة)، والتطبيق يبقى يعمل بدونه
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
